@@ -1,4 +1,4 @@
-var diagGraph = { //diag图数据操作
+﻿var diagGraph = { //diag图数据操作
   state: [],
   edg: [],
   statePoint: '',

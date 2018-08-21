@@ -2,6 +2,8 @@ from django.shortcuts import render
 from TraceSrc.Algorithm import findPath
 from TraceSrc.Algorithm import py2js
 from django.views.decorators.csrf import csrf_exempt
+from TraceSrc.Algorithm.data import allVertices
+
 ctx = dict()
 # index front-to-end connector
 @csrf_exempt
@@ -15,8 +17,11 @@ def index(req):
     print(type(jsPath))
     f.write(jsPath)
     f.close()'''
+    
     if req.is_ajax():
         #print(req.POST)
+        ctx['current_start'] = ""
+        ctx['current_direct'] = '显示全图'
         f = open(r'templates/scripts/args.txt', 'w')
         startNum = int(req.POST['point'])
         directNum = req.POST['direct']
@@ -24,12 +29,12 @@ def index(req):
         jsPath = py2js.parse(pyPath)
         f.write(jsPath)
         f.close()  
-        if int(req.POST['point']) == 0:
-            ctx['current_start'] = "1"
-            ctx['current_direct'] = '显示全图'
-        else:
-            ctx['current_start'] = int(req.POST['point'])
-            if req.POST['direct'] == "forwards":
+        if startNum != 0:
+            for v in allVertices:
+                if v['id'] == startNum:
+                    ctx['current_start'] = v['label']
+                    break
+            if directNum == "forwards":
                 ctx['current_direct'] = '向下追踪'
             else:
                 ctx['current_direct'] = '向上溯源'

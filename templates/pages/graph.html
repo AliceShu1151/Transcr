@@ -7,13 +7,13 @@
 <script src="../scripts/d3.min.js" charset="utf-8"></script>
 <script src="../scripts/dagre-d3.js"></script>
 <script src="../scripts/diag.js"></script>
-<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="../scripts/jquery-1.11.3.min.js"></script>
+<script src="../scripts/saveSvgAsPng.js"></script>
 
 <style>
 * {
 	padding:0;
 	margin:0;
-	text-align:center;
 }
 a {
 	text-decoration:none;
@@ -60,31 +60,56 @@ ul li a {
 }
 .list3 li {
 	clear:left;
-	width:80px;
+	width:100px;
 	height:40px;
 	line-height:40px;
 	background-color:#9966FF;
 }
 .list3 li a {
 	display:block;
-	width:80px;
+	width:100px;
 	height:40px;
 }
 .test {
-    position:absolute;
+    position:fixed;
     left:20px;
     top:100px;
     color:#000000;
-    width:80px;
+    width:400px;
     height:40px; 
-    width:200px;
+    text-align:left;
+}
+
+.btn {
+    position:fixed;
+    left:20px;
+    top:250px;
+    color:#000000;
+    background-color:#ccc;
+    outline:1px solid #000000;
+}
+
+a:hover {
+    outline: 3px solid #6FF0FC;
+    outline-offset: -2px;
 }
 
 
 </style>
 
 <body>
-<ul class="list1">
+<div>
+    <div class="test"> 
+        <div>当前节点:&nbsp;&nbsp;{{current_start}}</div><br><br>
+        <div>当前追溯方向:&nbsp;&nbsp;{{current_direct}}</div><br><br>
+        <div>输入文件名:</div>
+    </div>
+    <div class="btn"> 
+        <input ></input>
+        <botton onclick="saveSvg()">导出图片</botton>
+    </div>
+</div>
+<ul class="list1" style="text-align:center; position:fixed;">
     <li>
         <a href="#">选取节点</a>
         <ol class="list2">
@@ -163,10 +188,7 @@ ul li a {
     <li><a href="#" onclick="updateGraph()">提交</a></li>
     <li><a href="#" onclick="showOrigin()">显示原图</a></li>
 </ul>
-<div class="test"> 
-    <div>当前节点:&nbsp;&nbsp;{{current_start}}</div><br><br>
-    <div>当前追溯方向:&nbsp;&nbsp;{{current_direct}}</div>
-</div>
+
 
 
 
@@ -182,11 +204,13 @@ $(document).ready(function() {
     });
 
     $elem2.mouseenter(function() {
-        $(this).children("ol").stop().fadeIn(1500);
+        $(this).children("ol").stop().fadeIn(500);
     }).mouseleave(function() {
-        $(this).children("ol").stop().fadeOut(1500);
+        $(this).children("ol").stop().fadeOut(500);
     });
 });
+ 
+
 </script>
 
 <style id="css">
@@ -195,7 +219,7 @@ $(document).ready(function() {
     g.type-suss > rect {
         fill: #ddefd3;
     }
-
+    
     .node text {
         font-weight: 300;
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
@@ -215,7 +239,7 @@ $(document).ready(function() {
         transform: translate(0, -13px);
     }
 
-    .node rect {
+    .node > rect {
         fill: white;
         stroke-width: 0px;
         color: white;
@@ -229,7 +253,7 @@ $(document).ready(function() {
     g.type-init > rect {
         fill: rgba(0, 91, 252, 0.4);
     }
-
+    
     g.type-ready > rect {
         fill: rgba(0, 91, 252, 0.6);
     }
@@ -258,31 +282,37 @@ $(document).ready(function() {
     .type-freeze text {
         fill: #999999;
     }
-
+    
+    .node > rect:hover {
+        outline: 4px solid #6FF0FC;
+        outline-offset: -1px;
+    }
+    
     #myMenu {
-        position: absolute;
+        position: fixed;
         display: none;
         width: 80px;
         height: 80px;
         opacity:0.8;
         background: #999999;
+        text-align:center;
     }
 </style>
 
-<svg id="svgCanvas" width=960 height=900></svg>
+<svg id="svgCanvas" width=960 height=1200></svg>
 <ul id="myMenu">
     <li value="0" onclick="clickUpdateGraph(this)">追踪</li>
     <li value="1" onclick="clickUpdateGraph(this)">溯源</li>
 </ul>
 
 <script id="js">
-    let graph = '{{ graph }}';
-    let reg = new RegExp( '&quot;' , "g" );
+    let graph = "{{ graph }}";
+    let reg = new RegExp( "&quot;" , "g" );
     graph = graph.replace(reg, '"');
     graph = JSON.parse(graph);
     console.log(graph);
-    let state = graph['state'];
-    let edg = graph['edg'];
+    let state = graph["state"];
+    let edg = graph["edg"];
     console.log(state);
     console.log(edg);
 
@@ -313,7 +343,7 @@ $(document).ready(function() {
                 direct: direct
             },
             success: () => {
-                alert('修改成功！');
+                alert("修改成功！");
                 window.location.reload();
             },
         });
@@ -323,41 +353,45 @@ $(document).ready(function() {
 	    direct = "forwards";
 	    updateGraph();
     }
+    function closeMenu(){
+        myMenu.style.display = "none";
+        statePoint = point
+    }
+    function saveSvg(){
+        saveSvgAsPng(document.getElementById("svgCanvas"), "diagram.jpg",{backgroundColor:"white"});
+    }
 
     let statePoint = 1; // 当前选中的点
     diagGraph.init(statePoint, state, edg); //创建关系图
 
-    let svgCanvas = document.getElementById('svgCanvas'); //绑定事件鼠标点击
-    svgCanvas.addEventListener('click', function (e) {
+    let svgCanvas = document.getElementById("svgCanvas"); //绑定事件鼠标点击
+    let myMenu = document.getElementById("myMenu"); //鼠标右键
+    
+    svgCanvas.addEventListener("click", function (e) {
         e.preventDefault();
-        if (e.target.tagName === 'rect') {
+        closeMenu();
+        if (e.target.tagName === "rect") {
             diagGraph.changePoint(e.target.parentNode.id);
         }
     });
-
-    //yx @ 2018/8/17
-    //test block
-    //let testData  = '{{ testBlock }}';
-    //testData = testData.replace(reg, '"');
-    //console.log(JSON.parse(testData));
-
-    //test block
-
-    let myMenu = document.getElementById("myMenu"); //鼠标右键
     svgCanvas.addEventListener("contextmenu",function (e) { //鼠标右击事件
-        event.preventDefault();
-        if (event.target.tagName === 'rect') {
+        if (event.target.tagName === "rect") {
+            event.preventDefault();
             myMenu.style.top = event.clientY + "px";
             myMenu.style.left = event.clientX + "px";
-            myMenu.style.display = 'block';
+            myMenu.style.display = "block";
             statePoint = e.target.parentNode.id
             // this.myMenuShow = true
         }
+        else
+            closeMenu();
     });
-    document.addEventListener("click", (event) => {
-        myMenu.style.display = 'none';
-        statePoint = point
-    });
+    //svgCanvas.onwheel = closeMenu();
+    svgCanvas.addEventListener("wheel", closeMenu())
+    window.onmousewheel=document.onmousewheel=svgCanvas.onmousewheel=closeMenu;
+    
+    $('svgCanvas').bind('wheel', closeMenu());
+
 
 </script>
 
